@@ -1,17 +1,35 @@
-# Xcode
-xcuserdata/
-*.xcuserstate
-DerivedData/
+## macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+## Xcode user data + build output
 build/
+DerivedData/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+*.xccheckout
 *.moved-aside
+*.xcuserstate
 *.hmap
 *.ipa
 *.dSYM.zip
 *.dSYM
 
-# Swift Package Manager
-.build/
+## Swift Package Manager (Package.resolved is committed via shareddata)
 .swiftpm/
+.build/
 
-# macOS
-.DS_Store
+## Local-only working trees (not part of the published repo)
+reference/
+plan/
+
+## Logs / temp
+*.log

@@ -46,7 +46,7 @@ struct ResourceListView: View {
     }
 
     private var allColumns: [ColumnDefinition] {
-        if let registered = ResourceCatalog.shared.config(forKind: gvr.kind)?.columns {
+        if let registered = ResourceCatalog.shared.config(forKind: gvr.kind, group: gvr.group)?.columns {
             return registered
         }
         if let crdColumns = session.printerColumns(forGVR: gvr) {
@@ -141,7 +141,7 @@ struct ResourceListView: View {
             if gvr.supports(verb: "create") {
                 Button {
                     env.openYAMLCreate(kind: gvr.kind,
-                                       template: CreateTemplates.template(forKind: gvr.kind),
+                                       template: CreateTemplates.template(for: gvr),
                                        gvr: gvr, session: session)
                 } label: { Image(systemName: "plus") }
                     .help("Create \(gvr.kind)")
@@ -151,6 +151,7 @@ struct ResourceListView: View {
     }
 
     private func countLabel(visibleCount: Int) -> String {
+        if store.isLoading && store.items.isEmpty { return "Loading…" }
         if search.isEmpty { return "\(store.items.count) items" }
         return "Filtered: \(visibleCount) / \(store.items.count)"
     }
@@ -227,7 +228,10 @@ struct ResourceListView: View {
 
     @ViewBuilder
     private func tableOrEmpty(_ visible: [KubeResource]) -> some View {
-        if visible.isEmpty {
+        if visible.isEmpty && store.isLoading {
+            Spinner(label: "Loading \(gvr.kind)…")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if visible.isEmpty {
             EmptyStateView(title: store.error == nil ? "No \(gvr.kind)" : "Couldn’t load",
                            systemImage: "tray",
                            message: store.error?.localizedDescription)
@@ -278,7 +282,7 @@ struct ResourceListView: View {
     private func rowMenu(for resource: KubeResource) -> some View {
         let universal = UniversalActions.make(onEdit: { env.openYAMLEdit($0, gvr: gvr, session: session) },
                                               onViewYAML: { selection = $0.id })
-        let kindSpecific = ResourceCatalog.shared.actions(forKind: gvr.kind)
+        let kindSpecific = ResourceCatalog.shared.actions(forKind: gvr.kind, group: gvr.group)
         ForEach((kindSpecific + universal).filter { $0.isAvailable(resource) }) { action in
             Button(role: action.role) {
                 runAction(action, on: resource)
@@ -328,11 +332,13 @@ struct ResourceListView: View {
 }
 
 /// Namespace multi-select with substring search: typing "web" matches
-/// "teachy-web-dev" and "teachy-web-stg". Stays open for multi-toggling.
+/// "teachy-web-dev" and "teachy-web-stg". Checkboxes toggle multiple namespaces;
+/// clicking a name selects only that namespace and closes the popover.
 /// Selected namespaces sort to the top; ↑/↓ move a highlight through the
 /// results and ⏎ toggles it (or the first match) without leaving the field.
 private struct NamespaceFilterPopover: View {
     let session: ClusterSession
+    @Environment(\.dismiss) private var dismiss
     @State private var search = ""
     @State private var highlighted: Int?
 
@@ -359,15 +365,17 @@ private struct NamespaceFilterPopover: View {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         row("All Namespaces", checked: session.selectedNamespaces.isEmpty,
-                            highlighted: false) {
-                            session.selectedNamespaces = []
-                            session.applyNamespaceSelection()
+                            highlighted: false, toggle: selectAll) {
+                            selectAll()
+                            dismiss()
                         }
                         Divider()
                         ForEach(Array(filtered.enumerated()), id: \.element) { index, ns in
                             row(ns, checked: session.selectedNamespaces.contains(ns),
-                                highlighted: index == highlighted) {
-                                toggle(ns)
+                                highlighted: index == highlighted, toggle: { toggle(ns) }) {
+                                session.selectedNamespaces = [ns]
+                                session.applyNamespaceSelection()
+                                dismiss()
                             }
                             .id(ns)
                         }
@@ -387,6 +395,11 @@ private struct NamespaceFilterPopover: View {
                     }
                 }
             }
+            Divider()
+            Text("Click a name to select only that namespace. Use checkboxes to select several.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(Tokens.Spacing.sm)
         }
         .frame(width: 280)
         .onChange(of: search) { _, _ in
@@ -414,25 +427,38 @@ private struct NamespaceFilterPopover: View {
         if session.selectedNamespaces.contains(ns) { session.selectedNamespaces.remove(ns) }
         else { session.selectedNamespaces.insert(ns) }
         session.applyNamespaceSelection()
+        highlighted = filtered.firstIndex(of: ns)
+    }
+
+    private func selectAll() {
+        session.selectedNamespaces = []
+        session.applyNamespaceSelection()
+        highlighted = nil
     }
 
     private func row(_ title: String, checked: Bool, highlighted: Bool,
-                     action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: Tokens.Spacing.sm) {
-                Image(systemName: "checkmark")
-                    .font(.caption.weight(.semibold))
-                    .opacity(checked ? 1 : 0)
-                Text(title).lineLimit(1)
-                Spacer(minLength: 0)
+                     toggle: @escaping () -> Void, select: @escaping () -> Void) -> some View {
+        HStack(spacing: 0) {
+            Toggle(title, isOn: Binding(get: { checked }, set: { _ in toggle() }))
+                .toggleStyle(.checkbox)
+                .labelsHidden()
+                .accessibilityLabel(title)
+                .help("Toggle \(title) in the namespace selection")
+                .padding(.leading, Tokens.Spacing.sm)
+                .padding(.vertical, 4)
+            Button(action: select) {
+                Text(title)
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, Tokens.Spacing.sm)
+                    .padding(.vertical, 4)
+                    .contentShape(Rectangle())
             }
-            .contentShape(Rectangle())
-            .padding(.horizontal, Tokens.Spacing.sm)
-            .padding(.vertical, 4)
-            .background(highlighted ? AnyShapeStyle(.tint.opacity(0.18)) : AnyShapeStyle(.clear),
-                        in: RoundedRectangle(cornerRadius: Tokens.Radius.sm))
+            .buttonStyle(.plain)
+            .help("Select only \(title)")
         }
-        .buttonStyle(.plain)
+        .background(highlighted ? AnyShapeStyle(.tint.opacity(0.18)) : AnyShapeStyle(.clear),
+                    in: RoundedRectangle(cornerRadius: Tokens.Radius.sm))
         .padding(.horizontal, Tokens.Spacing.xs)
     }
 }

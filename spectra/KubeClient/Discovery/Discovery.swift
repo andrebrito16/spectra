@@ -15,36 +15,6 @@ nonisolated struct ServerVersionInfo: Decodable, Sendable {
     var minor: String?
 }
 
-private nonisolated struct APIResourceList: Decodable {
-    let groupVersion: String
-    let resources: [APIResourceEntry]
-}
-
-private nonisolated struct APIResourceEntry: Decodable {
-    let name: String
-    let singularName: String?
-    let namespaced: Bool
-    let kind: String
-    let verbs: [String]?
-    let shortNames: [String]?
-    let categories: [String]?
-}
-
-private nonisolated struct APIGroupList: Decodable {
-    let groups: [APIGroupEntry]
-}
-
-private nonisolated struct APIGroupEntry: Decodable {
-    let name: String
-    let versions: [GroupVersionEntry]
-    let preferredVersion: GroupVersionEntry?
-}
-
-private nonisolated struct GroupVersionEntry: Decodable {
-    let groupVersion: String
-    let version: String
-}
-
 private nonisolated struct SelfSubjectAccessReviewStatus: Decodable {
     let allowed: Bool
 }
@@ -71,17 +41,23 @@ actor Discovery {
 
         // Core group (/api/v1)
         if let core = try? await resourceList(path: "/api/v1") {
-            result.append(contentsOf: gvrs(from: core, group: "", version: "v1"))
+            result.append(contentsOf: APIResourceList.preferredResources(from: [core]))
         }
 
         // Named groups (/apis)
         let groupsRequest = try await client.connection.makeRequest(path: "/apis")
         let groupList = try await client.performDecodable(groupsRequest, as: APIGroupList.self)
         for group in groupList.groups {
-            guard let preferred = group.preferredVersion ?? group.versions.first else { continue }
-            let path = "/apis/\(preferred.groupVersion)"
-            guard let list = try? await resourceList(path: path) else { continue }
-            result.append(contentsOf: gvrs(from: list, group: group.name, version: preferred.version))
+            // A group's preferred version need not serve every resource. For
+            // example, Gateway can be v1 while ReferenceGrant is v1beta1 and
+            // TCPRoute is v1alpha2. Keep the first served version per resource,
+            // preferring the server's preferred version when it is available.
+            var lists: [APIResourceList] = []
+            for version in group.orderedVersions {
+                guard let list = try? await resourceList(path: "/apis/\(version.groupVersion)") else { continue }
+                lists.append(list)
+            }
+            result.append(contentsOf: APIResourceList.preferredResources(from: lists))
         }
         return result
     }
@@ -89,20 +65,6 @@ actor Discovery {
     private func resourceList(path: String) async throws -> APIResourceList {
         let request = try await client.connection.makeRequest(path: path)
         return try await client.performDecodable(request, as: APIResourceList.self)
-    }
-
-    private func gvrs(from list: APIResourceList, group: String, version: String) -> [GroupVersionResource] {
-        list.resources
-            .filter { !$0.name.contains("/") }  // skip subresources
-            .map { entry in
-                GroupVersionResource(
-                    group: group, version: version, resource: entry.name, kind: entry.kind,
-                    namespaced: entry.namespaced,
-                    singularName: entry.singularName ?? entry.kind.lowercased(),
-                    shortNames: entry.shortNames ?? [],
-                    verbs: entry.verbs ?? [],
-                    categories: entry.categories ?? [])
-            }
     }
 
     /// List namespaces; returns [] if forbidden (caller falls back to context ns).

@@ -2,6 +2,15 @@
   "originHash" : "6c68ae24b6494f6f0378c096b892b7f10c837df3273a028b5ced7a6942e6e11d",
   "pins" : [
     {
+      "identity" : "sparkle",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Sparkle-project/Sparkle.git",
+      "state" : {
+        "revision" : "0ef1ee0220239b3776f433314515fd849025673f",
+        "version" : "2.6.4"
+      }
+    },
+    {
       "identity" : "swift-argument-parser",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-argument-parser",

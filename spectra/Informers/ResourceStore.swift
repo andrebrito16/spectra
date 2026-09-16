@@ -14,15 +14,17 @@ import SwiftUI
 final class ResourceStore {
     let gvr: GroupVersionResource
     private(set) var items: [KubeResource] = []
-    var isLoading = false
-    var error: KubeError?
+    var isLoading: Bool { loadState.isLoading }
+    var error: KubeError? { scopeErrors.sorted { ($0.key ?? "") < ($1.key ?? "") }.first?.value }
     private(set) var loadedNamespaces: [String] = []
 
     private let connection: ClusterConnection
     private let client: KubeAPIClient
     private var informers: [Informer] = []
     private var byUID: [String: KubeResource] = [:]
-    private var flushScheduled = false
+    private var loadState = ResourceLoadState()
+    private var scopeErrors: [String?: KubeError] = [:]
+    @ObservationIgnored private var flushTask: Task<Void, Never>?
     /// Bumped on every restart; events from informers of an older generation
     /// (cancelled but still draining) are dropped instead of polluting the
     /// fresh state with spurious errors.
@@ -42,8 +44,9 @@ final class ResourceStore {
     // so this is bounded in practice.
 
     func subscribe(namespaces: [String]) {
-        if informers.isEmpty || loadedNamespaces != namespaces {
-            restart(namespaces: namespaces)
+        let scope = gvr.namespaced ? namespaces : []
+        if informers.isEmpty || loadedNamespaces != scope {
+            restart(namespaces: scope)
         }
     }
 
@@ -58,8 +61,9 @@ final class ResourceStore {
 
     /// Re-run with a new namespace set (selector changed).
     func setNamespaces(_ namespaces: [String]) {
-        guard loadedNamespaces != namespaces else { return }
-        restart(namespaces: namespaces)
+        let scope = gvr.namespaced ? namespaces : []
+        guard loadedNamespaces != scope else { return }
+        restart(namespaces: scope)
     }
 
     /// Force a full relist even when the namespace set is unchanged
@@ -75,9 +79,10 @@ final class ResourceStore {
         loadedNamespaces = namespaces
         byUID = [:]
         items = []
-        error = nil
+        scopeErrors = [:]
 
         let scopes: [String?] = gvr.namespaced && !namespaces.isEmpty ? namespaces : [nil]
+        loadState.reset(scopes: scopes)
         for scope in scopes {
             let informer = Informer(connection: connection, client: client,
                                     gvr: gvr, namespace: scope) { [weak self] event in
@@ -89,6 +94,8 @@ final class ResourceStore {
     }
 
     private func stopAll() {
+        flushTask?.cancel()
+        flushTask = nil
         let toStop = informers
         informers = []
         for informer in toStop {
@@ -102,18 +109,24 @@ final class ResourceStore {
         guard generation == self.generation else { return }
         switch event {
         case .loading(let loading):
-            isLoading = loading
+            loadState.setLoading(loading, scope: scope)
         case .error(let error):
-            self.error = error
+            scopeErrors[scope] = error
+            loadState.complete(scope: scope)
         case .listed(let list, _):
-            error = nil  // informer recovered — clear any stale failure
+            scopeErrors[scope] = nil  // only clear this namespace's error
             if scope == nil {
                 byUID.removeAll()
             } else {
                 byUID = byUID.filter { $0.value.namespace != scope }
             }
             for resource in list { byUID[resource.id] = resource }
-            scheduleFlush()
+            // Publish list results before clearing loading. Debouncing this
+            // first snapshot briefly displayed an empty state between them.
+            flushTask?.cancel()
+            flushTask = nil
+            publishItems()
+            loadState.complete(scope: scope)
         case .event(let watchEvent):
             let resource = watchEvent.object
             switch watchEvent.type {
@@ -126,17 +139,21 @@ final class ResourceStore {
     }
 
     private func scheduleFlush() {
-        guard !flushScheduled else { return }
-        flushScheduled = true
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(250))
-            self.flushScheduled = false
-            self.items = self.byUID.values.sorted { lhs, rhs in
-                if lhs.namespace != rhs.namespace {
-                    return (lhs.namespace ?? "") < (rhs.namespace ?? "")
-                }
-                return lhs.name < rhs.name
+        guard flushTask == nil else { return }
+        flushTask = Task { @MainActor [weak self] in
+            do { try await Task.sleep(for: .milliseconds(250)) } catch { return }
+            guard let self else { return }
+            self.flushTask = nil
+            self.publishItems()
+        }
+    }
+
+    private func publishItems() {
+        items = byUID.values.sorted { lhs, rhs in
+            if lhs.namespace != rhs.namespace {
+                return (lhs.namespace ?? "") < (rhs.namespace ?? "")
             }
+            return lhs.name < rhs.name
         }
     }
 

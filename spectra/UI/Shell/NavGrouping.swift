@@ -13,6 +13,7 @@ import Foundation
 nonisolated enum NavSection: String, CaseIterable, Identifiable, Sendable {
     case cluster = "Cluster"
     case workloads = "Workloads"
+    case argoCD = "Argo CD"
     case config = "Config"
     case network = "Network"
     case storage = "Storage"
@@ -48,6 +49,27 @@ nonisolated struct SidebarSection: Identifiable, Sendable {
 }
 
 nonisolated enum NavGrouping {
+    /// Match custom kinds by API group as well: unrelated controllers can both
+    /// define a Gateway or Application without sharing its schema.
+    static let customKindSection: [String: (section: NavSection, order: Int, title: String)] = [
+        "argoproj.io/Application": (.argoCD, 0, "Applications"),
+        "argoproj.io/ApplicationSet": (.argoCD, 1, "Application Sets"),
+        "argoproj.io/AppProject": (.argoCD, 2, "Projects"),
+        "argoproj.io/Rollout": (.argoCD, 3, "Rollouts"),
+        "argoproj.io/AnalysisRun": (.argoCD, 4, "Analysis Runs"),
+        "argoproj.io/AnalysisTemplate": (.argoCD, 5, "Analysis Templates"),
+        "argoproj.io/ClusterAnalysisTemplate": (.argoCD, 6, "Cluster Analysis Templates"),
+        "argoproj.io/Experiment": (.argoCD, 7, "Experiments"),
+        "gateway.networking.k8s.io/Gateway": (.network, 6, "Gateways"),
+        "gateway.networking.k8s.io/GatewayClass": (.network, 7, "Gateway Classes"),
+        "gateway.networking.k8s.io/HTTPRoute": (.network, 8, "HTTP Routes"),
+        "gateway.networking.k8s.io/GRPCRoute": (.network, 9, "GRPC Routes"),
+        "gateway.networking.k8s.io/TLSRoute": (.network, 10, "TLS Routes"),
+        "gateway.networking.k8s.io/TCPRoute": (.network, 11, "TCP Routes"),
+        "gateway.networking.k8s.io/UDPRoute": (.network, 12, "UDP Routes"),
+        "gateway.networking.k8s.io/ReferenceGrant": (.network, 13, "Reference Grants"),
+    ]
+
     /// kind → (section, order within section).
     static let kindSection: [String: (NavSection, Int)] = [
         // Cluster
@@ -98,6 +120,14 @@ nonisolated enum NavGrouping {
         var seenCRDs: Set<String> = []
 
         for gvr in gvrs where gvr.supports(verb: "list") {
+            let key = "\(gvr.group)/\(gvr.kind)"
+            if let mapping = customKindSection[key] {
+                guard seenCRDs.insert(key).inserted else { continue }
+                let entry = SidebarEntry(id: gvr.id, title: mapping.title, kind: gvr.kind,
+                                         icon: ResourceKindIcon.symbol(forKind: gvr.kind))
+                bySection[mapping.section, default: []].append((mapping.order, entry))
+                continue
+            }
             // Skip duplicate kinds (same kind served by multiple groups).
             let entry = SidebarEntry(id: gvr.id, title: titleCase(gvr.resource),
                                      kind: gvr.kind,
@@ -109,7 +139,6 @@ nonisolated enum NavGrouping {
             } else if !builtInGroups.contains(gvr.group), !gvr.group.isEmpty {
                 // Dedup per (group, kind): the same kind name may legitimately
                 // exist in two unrelated CRD groups.
-                let key = "\(gvr.group)/\(gvr.kind)"
                 guard !seenCRDs.contains(key) else { continue }
                 seenCRDs.insert(key)
                 crdByGroup[gvr.group, default: []].append(entry)

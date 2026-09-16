@@ -25,6 +25,7 @@ final class AppEnvironment {
     let dock: DockModel
     let portForwards: PortForwardManager
     let nodeMetrics: NodeMetricsProvider
+    let updater: AppUpdater
 
     /// Saved workspace (tabs + history) per cluster, restored on switch-back.
     private var navSnapshots: [String: NavigationModel.Snapshot] = [:]
@@ -38,6 +39,7 @@ final class AppEnvironment {
         self.dock = DockModel()
         self.portForwards = PortForwardManager()
         self.nodeMetrics = NodeMetricsProvider()
+        self.updater = AppUpdater()
     }
 
     /// Switch the focused cluster (connecting if needed). The outgoing cluster's

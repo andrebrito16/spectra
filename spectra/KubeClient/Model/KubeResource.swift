@@ -30,6 +30,10 @@ nonisolated struct KubeResource: Codable, Sendable, Identifiable, Hashable {
     // MARK: - Top-level accessors
 
     var apiVersion: String? { json["apiVersion"]?.stringValue }
+    var apiGroup: String? {
+        guard let apiVersion else { return nil }
+        return apiVersion.firstIndex(of: "/").map { String(apiVersion[..<$0]) } ?? ""
+    }
     var kind: String? { json["kind"]?.stringValue }
     var metadata: JSONValue? { json["metadata"] }
     var spec: JSONValue? { json["spec"] }

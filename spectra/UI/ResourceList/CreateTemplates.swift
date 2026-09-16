@@ -9,6 +9,13 @@
 import Foundation
 
 nonisolated enum CreateTemplates {
+    static func template(for gvr: GroupVersionResource) -> String {
+        var lines = template(forKind: gvr.kind).components(separatedBy: "\n")
+        lines[0] = "apiVersion: \(gvr.groupVersion)"
+        if !gvr.namespaced { lines.removeAll { $0 == "  namespace: default" } }
+        return lines.joined(separator: "\n")
+    }
+
     static func template(forKind kind: String) -> String {
         switch kind {
         case "Namespace":

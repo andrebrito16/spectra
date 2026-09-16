@@ -22,6 +22,10 @@ final class ClusterRecord {
     // Display preferences
     var displayName: String?
     var iconColorHex: String?
+    /// Optional second color and direction for the cluster's local theme.
+    /// Existing records retain their solid color through lightweight migration.
+    var gradientEndColorHex: String?
+    var gradientAngle: Double?
     /// SF Symbol shown in the space indicator / switcher (nil = default).
     var iconSymbol: String?
     var pinned: Bool

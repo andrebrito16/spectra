@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds, signs, notarizes, and packages Spectra.dmg for distribution.
+# Builds, signs, notarizes, and packages versioned Spectra DMG/ZIP artifacts.
 # SKIP_ARCHIVE=1 ./scripts/release.sh reuses the existing archive/export.
 set -euo pipefail
 
@@ -9,9 +9,13 @@ ARCHIVE="$BUILD_DIR/Spectra.xcarchive"
 EXPORT_DIR="$BUILD_DIR/export"
 APP="$EXPORT_DIR/Spectra.app"
 STAGING="$BUILD_DIR/dmg-staging"
-DMG="$BUILD_DIR/Spectra.dmg"
-NOTARY_PROFILE=spectra-notary
-SIGN_IDENTITY="Developer ID Application: Andre Brito (U672XBMNSZ)"
+RELEASE_VERSION="${RELEASE_VERSION:-0.0.1}"
+DMG="$BUILD_DIR/Spectra-${RELEASE_VERSION}.dmg"
+ZIP="$BUILD_DIR/Spectra-${RELEASE_VERSION}.zip"
+NOTARY_PROFILE="${NOTARY_PROFILE:-spectra-notary}"
+SIGN_IDENTITY="${SIGN_IDENTITY:-Developer ID Application: Andre Brito (U672XBMNSZ)}"
+
+python3 scripts/prepare-licenses.py --check
 
 if [[ "${SKIP_ARCHIVE:-0}" == "1" && -d "$APP" ]]; then
   echo "==> Reusing existing export at $APP"
@@ -31,6 +35,7 @@ else
     -exportPath "$EXPORT_DIR" | tail -2
 fi
 
+python3 scripts/prepare-licenses.py --check --app "$APP"
 codesign --verify --deep --strict "$APP"
 echo "==> Signature OK: $(codesign -dvv "$APP" 2>&1 | grep '^Authority=Developer ID' || true)"
 
@@ -43,6 +48,10 @@ echo "==> Staging clean DMG contents (app only)"
 rm -rf "$STAGING" "$DMG"
 mkdir -p "$STAGING"
 cp -R "$APP" "$STAGING/"
+
+echo "==> Creating Sparkle OTA archive"
+ditto -c -k --sequesterRsrc --keepParent "$APP" "$ZIP"
+echo "OTA archive: $ZIP"
 
 echo "==> Building drag-and-drop DMG"
 create-dmg \

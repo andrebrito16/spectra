@@ -26,6 +26,7 @@ struct MainWindow: View {
         } detail: {
             contentRegion
         }
+        .tint(env.clusters.activeClusterId.flatMap { env.clusters.record(id: $0)?.customColor } ?? env.theme.accent)
         .overlay { NotificationsOverlay() }
         .sheet(isPresented: $navigation.showCommandPalette) {
             CommandPalette()

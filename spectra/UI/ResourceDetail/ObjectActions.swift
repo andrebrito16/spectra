@@ -83,7 +83,7 @@ enum UniversalActions {
     }
 
     static func deleteResource(_ resource: KubeResource, session: ClusterSession, force: Bool) async throws {
-        guard let kind = resource.kind, let gvr = session.gvr(forKind: kind) else {
+        guard let kind = resource.kind, let gvr = session.gvr(forKind: kind, group: resource.apiGroup) else {
             throw KubeError.notFound("no GVR for kind \(resource.kind ?? "?")")
         }
         try await session.client.delete(gvr, namespace: resource.namespace, name: resource.name,
@@ -91,7 +91,7 @@ enum UniversalActions {
     }
 
     static func removeFinalizers(_ resource: KubeResource, session: ClusterSession) async throws {
-        guard let kind = resource.kind, let gvr = session.gvr(forKind: kind) else {
+        guard let kind = resource.kind, let gvr = session.gvr(forKind: kind, group: resource.apiGroup) else {
             throw KubeError.notFound("no GVR for kind \(resource.kind ?? "?")")
         }
         let patch: [String: JSONValue] = ["metadata": .object(["finalizers": .null])]

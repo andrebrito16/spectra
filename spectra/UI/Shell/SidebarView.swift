@@ -15,6 +15,10 @@ struct SidebarView: View {
     @State private var expanded: Set<String> = ["Workloads"]
     @State private var orgSheet: OrgSheetTarget?
 
+    private var activeRecord: ClusterRecord? {
+        env.clusters.activeClusterId.flatMap { env.clusters.record(id: $0) }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             ClusterSwitcher()
@@ -28,6 +32,12 @@ struct SidebarView: View {
             if env.clusters.records.count > 1 {
                 Divider()
                 SpaceIndicator()
+            }
+        }
+        .background {
+            if let record = activeRecord, let start = record.customColor {
+                ClusterThemeBackground(start: start, end: record.gradientEndColor ?? start,
+                                       angle: record.gradientAngle ?? 135)
             }
         }
         .simultaneousGesture(clusterSwipe)
@@ -79,6 +89,8 @@ struct SidebarView: View {
             }
         }
         .listStyle(.sidebar)
+        .scrollContentBackground(.hidden)
+        .labelStyle(SidebarResourceLabelStyle())
         .overlay {
             if session.gvrs.isEmpty && session.bootstrapError == nil {
                 Spinner(label: "Loading resources…")
@@ -236,6 +248,16 @@ struct SidebarView: View {
     }
 }
 
+/// Use the same icon column for navigation rows and section headers.
+private struct SidebarResourceLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: Tokens.Spacing.sm) {
+            configuration.icon.frame(width: 18)
+            configuration.title
+        }
+    }
+}
+
 /// Arc Spaces-style indicator: each cluster's icon, the active one tinted with
 /// its custom color (theme accent if none), the rest grey. Click to switch.
 struct SpaceIndicator: View {
@@ -247,7 +269,7 @@ struct SpaceIndicator: View {
                 let active = record.id == env.clusters.activeClusterId
                 Image(systemName: record.effectiveIcon)
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(active ? AnyShapeStyle(record.customColor ?? env.theme.accent)
+                    .foregroundStyle(active ? record.identityStyle(fallback: env.theme.accent)
                                             : AnyShapeStyle(.tertiary))
                     .scaleEffect(active ? 1.15 : 1)
                     .frame(width: 20, height: 20)
@@ -279,7 +301,7 @@ struct ClusterSwitcher: View {
         } label: {
             HStack(spacing: Tokens.Spacing.sm) {
                 Image(systemName: activeRecord?.effectiveIcon ?? ClusterStyle.defaultSymbol)
-                    .foregroundStyle(activeRecord?.customColor ?? env.theme.accent)
+                    .foregroundStyle(activeRecord?.identityStyle(fallback: env.theme.accent) ?? AnyShapeStyle(env.theme.accent))
                     .font(.title3)
                 VStack(alignment: .leading, spacing: 0) {
                     Text(activeRecord?.effectiveName ?? "Catalog")
@@ -302,6 +324,11 @@ struct ClusterSwitcher: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .contextMenu {
+            if let activeRecord {
+                Button("Customize…") { renameTarget = activeRecord }
+            }
+        }
         .popover(isPresented: $showPopover, arrowEdge: .bottom) {
             switcherPopover
         }
@@ -324,6 +351,18 @@ struct ClusterSwitcher: View {
             .padding(Tokens.Spacing.sm)
 
             Divider()
+
+            if let activeRecord {
+                Button {
+                    showPopover = false
+                    renameTarget = activeRecord
+                } label: {
+                    Label("Customize Cluster…", systemImage: "paintpalette")
+                }
+                .buttonStyle(.plain)
+                .padding(Tokens.Spacing.sm)
+                Divider()
+            }
 
             ForEach(env.clusters.groupedClusters.filter {
                 $0.org != nil || !$0.records.isEmpty
@@ -358,6 +397,9 @@ struct ClusterSwitcher: View {
             showPopover = false
         } label: {
             HStack {
+                Image(systemName: record.effectiveIcon)
+                    .foregroundStyle(record.identityStyle(fallback: env.theme.accent))
+                    .frame(width: 18)
                 StatusDot(status: env.clusters.states[record.id]?.status.status ?? .neutral)
                 Text(record.effectiveName)
                 Spacer()
@@ -397,6 +439,9 @@ private struct ClusterSidebarRow: View {
             env.openCluster(record.id)
         } label: {
             HStack(spacing: Tokens.Spacing.sm) {
+                Image(systemName: record.effectiveIcon)
+                    .foregroundStyle(record.identityStyle(fallback: env.theme.accent))
+                    .frame(width: 18)
                 StatusDot(status: env.clusters.states[record.id]?.status.status ?? .neutral)
                 Text(record.effectiveName)
                     .lineLimit(1)

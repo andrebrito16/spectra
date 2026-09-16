@@ -19,5 +19,7 @@ enum FeatureRegistry {
         WorkloadConfigs.register(into: catalog)
         ConfigNetworkStorageConfigs.register(into: catalog)
         ClusterScopeConfigs.register(into: catalog)
+        ArgoCDConfigs.register(into: catalog)
+        GatewayConfigs.register(into: catalog)
     }
 }

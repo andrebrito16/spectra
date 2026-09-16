@@ -14,12 +14,16 @@ Lens-style Kubernetes IDEs today are Electron apps with a Node main process, a C
 - Multi-cluster: kubeconfig auto-detect, per-cluster rename, **Arc-style switching** (MX Master 3 thumb-wheel side-scroll, sidebar swipe, ⌥⌘← / ⌥⌘→, indicator dots).
 - Tabbed content area, collapsible sidebar (Workloads expanded by default), ⌘K command palette.
 - Generic config-driven list/detail engine — Workloads, Config, Network, Storage, Cluster, RBAC, Helm.
+- Argo CD menu: Applications, Application Sets, Projects, Rollouts, analysis runs/templates, and experiments, with sync, health, and rollout status.
+- Network views for [Gateway API](https://gateway-api.sigs.k8s.io/concepts/api-overview/): Gateways, Gateway Classes, HTTP/GRPC/TLS/TCP/UDP Routes, and Reference Grants. Works with GKE and other Gateway API controllers; entries appear when their APIs are installed.
+- Namespace filtering: click a name to select only that namespace; use the left checkboxes to select several while keeping the selector open.
 - CRDs and their custom resources appear automatically (columns derived from CRD `additionalPrinterColumns`, no per-CRD code).
 - Auth: client cert (mTLS), bearer token, `exec` plugins (aws / gke-gcloud-auth-plugin / kubelogin / doctl / …), OIDC.
 - Native log streaming, SwiftTerm-backed terminal, pod / node shell (`kubectl debug node`), port-forward manager.
 - Helm (v3 & v4 basic flows) via the bundled mise/brew/asdf-aware tool resolver.
 - Metrics: auto-detects **Grafana Mimir** / Thanos / Prometheus (prefers Ingress URL because the EKS API-proxy often times out); node CPU/RAM bars via metrics-server.
 - Rotating diagnostics log + "Collect Diagnostics" bundle for bug reports.
+- Homebrew Cask and signed Sparkle OTA update packaging: see [OTA.md](OTA.md) and [packaging/homebrew/Casks/spectra.rb](packaging/homebrew/Casks/spectra.rb).
 
 ## What's missing / unverified
 
@@ -49,6 +53,16 @@ open ~/Library/Developer/Xcode/DerivedData/spectra-*/Build/Products/Debug/Spectr
 ```
 
 Or just open `spectra.xcodeproj` in Xcode and press ⌘R.
+
+## Resource regression checks
+
+```bash
+bash scripts/test-resource-features.sh
+```
+
+Compiles the production models and runs local fixtures for discovery across API versions, sidebar grouping, Gateway status, Argo resource fields, and create templates. Requires Xcode, with no cluster connection or app launch.
+
+For a UI smoke check, connect to a cluster with Argo and Gateway API resources, open their new menu entries, and inspect a resource's details. In a namespaced list, check two namespace boxes, then click a namespace name: only that namespace should remain selected and the selector should close. Reopen it and verify that checkboxes preserve the other selections; **All Namespaces** clears the filter. Search and ↑/↓/Return should still work.
 
 ## Contributing
 

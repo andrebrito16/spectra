@@ -61,6 +61,14 @@ struct SpectraCommands: Commands {
         }
 
         CommandGroup(replacing: .help) {
+            Button("Open Source Licenses") {
+                if let url = Bundle.main.url(forResource: "OpenSourceNotices", withExtension: "txt")
+                    ?? Bundle.main.url(forResource: "OpenSourceNotices", withExtension: "txt", subdirectory: "Resources") {
+                    NSWorkspace.shared.open(url)
+                }
+            }
+            Button("Check for Updates…") { env.updater.checkForUpdates() }
+            Divider()
             Button("Keyboard Shortcuts") { env.navigation.showShortcuts = true }
                 .keyboardShortcut("/", modifiers: .command)
             Button("Reveal Diagnostics Logs") { Diagnostics.revealLogs() }

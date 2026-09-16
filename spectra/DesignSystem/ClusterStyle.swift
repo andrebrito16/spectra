@@ -8,6 +8,7 @@
 //
 
 import SwiftUI
+import AppKit
 
 nonisolated enum ClusterStyle {
     static let defaultSymbol = "circle.hexagongrid.fill"
@@ -29,6 +30,54 @@ nonisolated enum ClusterStyle {
         ("Green", "#30D158"), ("Teal", "#40C8E0"), ("Indigo", "#5E5CE6"),
         ("Brown", "#AC8E68"),
     ]
+
+    static let gradients: [ClusterGradientPreset] = [
+        .init(name: "Aurora", start: "#5B4FE9", end: "#28C6B7", angle: 35),
+        .init(name: "Dusk", start: "#7854D8", end: "#EF8AAF", angle: 135),
+        .init(name: "Ocean", start: "#1479C9", end: "#38C9B5", angle: 55),
+        .init(name: "Ember", start: "#DF5268", end: "#F4AD62", angle: 145),
+        .init(name: "Forest", start: "#218779", end: "#9DC46D", angle: 35),
+        .init(name: "Midnight", start: "#364595", end: "#A166DB", angle: 125),
+    ]
+}
+
+nonisolated struct ClusterGradientPreset: Identifiable {
+    let name: String
+    let start: String
+    let end: String
+    let angle: Double
+    var id: String { name }
+}
+
+/// One gradient implementation shared by the editor, sidebar, and cards.
+nonisolated struct ClusterGradient: ShapeStyle {
+    let start: Color
+    let end: Color
+    var angle: Double = 135
+
+    func resolve(in environment: EnvironmentValues) -> some ShapeStyle {
+        let radians = angle * .pi / 180
+        let dx = cos(radians) / 2
+        let dy = sin(radians) / 2
+        return LinearGradient(colors: [start, end],
+                              startPoint: UnitPoint(x: 0.5 - dx, y: 0.5 - dy),
+                              endPoint: UnitPoint(x: 0.5 + dx, y: 0.5 + dy))
+    }
+}
+
+struct ClusterThemeBackground: View {
+    let start: Color
+    let end: Color
+    var angle: Double = 135
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Rectangle()
+            .fill(ClusterGradient(start: start, end: end, angle: angle))
+            .opacity(colorScheme == .dark ? 0.28 : 0.17)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+    }
 }
 
 nonisolated extension Color {
@@ -43,6 +92,13 @@ nonisolated extension Color {
                   green: Double((rgb >> 8) & 0xFF) / 255,
                   blue: Double(rgb & 0xFF) / 255)
     }
+    var rgbHex: String? {
+        guard let rgb = NSColor(self).usingColorSpace(.sRGB) else { return nil }
+        return String(format: "#%02X%02X%02X",
+                      Int((rgb.redComponent * 255).rounded()),
+                      Int((rgb.greenComponent * 255).rounded()),
+                      Int((rgb.blueComponent * 255).rounded()))
+    }
 }
 
 nonisolated extension ClusterRecord {
@@ -50,4 +106,13 @@ nonisolated extension ClusterRecord {
     /// The cluster's custom accent, if one is set (falls back to theme accent at
     /// the call sites so "no color" follows the app theme).
     var customColor: Color? { Color(hex: iconColorHex) }
+    var gradientEndColor: Color? { Color(hex: gradientEndColorHex) }
+
+    func identityStyle(fallback: Color) -> AnyShapeStyle {
+        let start = customColor ?? fallback
+        if let end = gradientEndColor {
+            return AnyShapeStyle(ClusterGradient(start: start, end: end, angle: gradientAngle ?? 135))
+        }
+        return AnyShapeStyle(start)
+    }
 }

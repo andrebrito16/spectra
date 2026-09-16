@@ -26,12 +26,12 @@ struct DetailDrawer: View {
         let universal = UniversalActions.make(
             onEdit: onEdit,
             onViewYAML: { _ in showYAML = true })
-        let kindSpecific = ResourceCatalog.shared.actions(forKind: resource.kind ?? "")
+        let kindSpecific = ResourceCatalog.shared.actions(forKind: resource.kind ?? "", group: resource.apiGroup)
         return kindSpecific + universal
     }
 
     private var kindSections: [DetailSectionDef] {
-        ResourceCatalog.shared.detailSections(forKind: resource.kind ?? "")
+        ResourceCatalog.shared.detailSections(forKind: resource.kind ?? "", group: resource.apiGroup)
     }
 
     var body: some View {

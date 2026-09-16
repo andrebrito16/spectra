@@ -1,0 +1,17 @@
+{
+  "packages": {
+    "sparkle": {"version": "2.6.4", "revision": "0ef1ee0220239b3776f433314515fd849025673f"},
+    "yams": {"version": "5.4.0", "revision": "3d6871d5b4a5cd519adf233fbb576e0a2af71c17"},
+    "swiftterm": {"version": "1.13.0", "revision": "8e7a1e154f470e19c709a00a8768df348ba5fc43"},
+    "swift-argument-parser": {"version": "1.8.1", "revision": "ca37474853a4b5f59a22c74bfdd449b1f6bc4cc2"}
+  },
+  "notices": [
+    {"name": "Sparkle 2.6.4", "license": "MIT", "file": "Sparkle.txt", "source": "https://github.com/Sparkle-project/Sparkle/blob/0ef1ee0220239b3776f433314515fd849025673f/LICENSE", "scope": "Signed macOS OTA update framework and its bundled external notices."},
+    {"name": "Yams 5.4.0", "license": "MIT", "file": "Yams.txt", "source": "https://github.com/jpsim/Yams/blob/3d6871d5b4a5cd519adf233fbb576e0a2af71c17/LICENSE", "scope": "Linked YAML library."},
+    {"name": "LibYAML", "license": "MIT", "file": "LibYAML.txt", "source": "https://github.com/yaml/libyaml/blob/0.2.5/License", "scope": "C YAML implementation included in Yams (CYaml)."},
+    {"name": "SwiftTerm 1.13.0", "license": "MIT", "file": "SwiftTerm.txt", "source": "https://github.com/migueldeicaza/SwiftTerm/blob/8e7a1e154f470e19c709a00a8768df348ba5fc43/LICENSE", "scope": "Linked terminal library; includes the xterm.js, SourceLair, and Christopher Jeffrey attributions from its license."},
+    {"name": "libsixel", "license": "MIT", "file": "LibSixel.txt", "source": "https://github.com/saitoha/libsixel/blob/master/LICENSE", "scope": "SwiftTerm SixelDcsHandler.swift identifies code ported from libsixel; no standalone libsixel binary is bundled."},
+    {"name": "Ghostty", "license": "MIT", "file": "Ghostty.txt", "source": "https://github.com/ghostty-org/ghostty/blob/main/LICENSE", "scope": "SwiftTerm Terminal.swift identifies an adapted Ghostty-style URL/path pattern; no Ghostty binary is bundled."},
+    {"name": "Swift Argument Parser 1.8.1", "license": "Apache-2.0 WITH Swift-exception", "file": "SwiftArgumentParser.txt", "source": "https://github.com/apple/swift-argument-parser/blob/ca37474853a4b5f59a22c74bfdd449b1f6bc4cc2/LICENSE.txt", "scope": "Resolved for SwiftTerm's termcast executable. Spectra links the SwiftTerm library, whose target does not depend on ArgumentParser. Included for dependency inventory completeness."}
+  ]
+}

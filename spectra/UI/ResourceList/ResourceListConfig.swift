@@ -69,33 +69,39 @@ struct ResourceConfig {
     }
 }
 
-/// Registry of per-kind configs. Feature phases register into the shared catalog;
+/// Registry of per-kind configs, optionally scoped to an API group. Feature phases register into the shared catalog;
 /// unregistered kinds (including CRDs) get default columns.
 @MainActor
 final class ResourceCatalog {
     static let shared = ResourceCatalog()
 
     private var configs: [String: ResourceConfig] = [:]
+    private var groupConfigs: [String: ResourceConfig] = [:]
 
-    func register(_ kind: String, _ config: ResourceConfig) {
-        configs[kind] = config
+    func register(_ kind: String, group: String? = nil, _ config: ResourceConfig) {
+        if let group {
+            groupConfigs["\(group)/\(kind)"] = config
+        } else {
+            configs[kind] = config
+        }
     }
 
-    func config(forKind kind: String) -> ResourceConfig? {
-        configs[kind]
+    func config(forKind kind: String, group: String? = nil) -> ResourceConfig? {
+        if let group, let config = groupConfigs["\(group)/\(kind)"] { return config }
+        return configs[kind]
     }
 
     /// Columns for a kind: registered columns, else defaults.
-    func columns(forKind kind: String, namespaced: Bool) -> [ColumnDefinition] {
-        configs[kind]?.columns ?? Self.defaultColumns(namespaced: namespaced)
+    func columns(forKind kind: String, namespaced: Bool, group: String? = nil) -> [ColumnDefinition] {
+        config(forKind: kind, group: group)?.columns ?? Self.defaultColumns(namespaced: namespaced)
     }
 
-    func actions(forKind kind: String) -> [ObjectAction] {
-        configs[kind]?.actions ?? []
+    func actions(forKind kind: String, group: String? = nil) -> [ObjectAction] {
+        config(forKind: kind, group: group)?.actions ?? []
     }
 
-    func detailSections(forKind kind: String) -> [DetailSectionDef] {
-        configs[kind]?.detailSections ?? []
+    func detailSections(forKind kind: String, group: String? = nil) -> [DetailSectionDef] {
+        config(forKind: kind, group: group)?.detailSections ?? []
     }
 
     /// Default columns for any kind (CRDs included): Name [+ Namespace] + Age.

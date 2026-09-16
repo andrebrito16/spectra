@@ -71,6 +71,9 @@ private struct GeneralSettings: View {
                         Text("Beta").tag("beta")
                     }
                     .onChange(of: settings.updateChannel) { _, _ in try? modelContext.save() }
+                    Button("Check for Updates…") { env.updater.checkForUpdates() }
+                    Text("Updates are downloaded only from signed Sparkle releases.")
+                        .font(.caption).foregroundStyle(.secondary)
                 }
             } else {
                 Text("Settings not loaded.").foregroundStyle(.secondary)

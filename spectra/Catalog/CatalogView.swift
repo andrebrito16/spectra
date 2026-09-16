@@ -175,9 +175,9 @@ private struct ClusterCard: View {
         } label: {
             VStack(alignment: .leading, spacing: Tokens.Spacing.sm) {
                 HStack {
-                    Image(systemName: "circle.hexagongrid.fill")
+                    Image(systemName: record.effectiveIcon)
                         .font(.title)
-                        .foregroundStyle(env.theme.accent)
+                        .foregroundStyle(record.identityStyle(fallback: env.theme.accent))
                     Spacer()
                     StatusDot(status: status.status, diameter: 10)
                 }
@@ -196,8 +196,15 @@ private struct ClusterCard: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(Tokens.Spacing.lg)
+            .background {
+                if let start = record.customColor {
+                    ClusterThemeBackground(start: start, end: record.gradientEndColor ?? start,
+                                           angle: record.gradientAngle ?? 135)
+                }
+            }
             .background(.regularMaterial,
                         in: RoundedRectangle(cornerRadius: Tokens.Radius.lg))
+            .clipShape(RoundedRectangle(cornerRadius: Tokens.Radius.lg))
         }
         .buttonStyle(.plain)
         .draggable(record.id)

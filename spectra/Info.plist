@@ -2,6 +2,16 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>SUFeedURL</key>
+	<string>https://github.com/andrebrito16/spectra/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>e9FiWyoM3YcPpF6nt3KYCRNZTvjQ5Iph7Kv3rWeiFRk=</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUScheduledCheckInterval</key>
+	<real>86400</real>
+	<key>SUAutomaticallyUpdate</key>
+	<false/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

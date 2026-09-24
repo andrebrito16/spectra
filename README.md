@@ -23,7 +23,7 @@ Lens-style Kubernetes IDEs today are Electron apps with a Node main process, a C
 - Helm (v3 & v4 basic flows) via the bundled mise/brew/asdf-aware tool resolver.
 - Metrics: auto-detects **Grafana Mimir** / Thanos / Prometheus (prefers Ingress URL because the EKS API-proxy often times out); node CPU/RAM bars via metrics-server.
 - Rotating diagnostics log + "Collect Diagnostics" bundle for bug reports.
-- Homebrew Cask and signed Sparkle OTA update packaging: see [OTA.md](OTA.md) and [packaging/homebrew/Casks/spectra.rb](packaging/homebrew/Casks/spectra.rb).
+- Homebrew Cask (`spectra-k8s`) and signed Sparkle OTA update packaging: see [OTA.md](OTA.md) and [packaging/homebrew/Casks/spectra-k8s.rb](packaging/homebrew/Casks/spectra-k8s.rb).
 
 ## What's missing / unverified
 
@@ -53,6 +53,19 @@ open ~/Library/Developer/Xcode/DerivedData/spectra-*/Build/Products/Debug/Spectr
 ```
 
 Or just open `spectra.xcodeproj` in Xcode and press ⌘R.
+
+### Canary build (test `main` next to the stable app)
+
+```bash
+scripts/canary.sh            # build the current checkout, install "Spectra Canary.app", launch
+scripts/canary.sh --no-launch
+```
+
+The `Canary` configuration is Release-optimised but ships as **Spectra Canary**
+with a yellow icon, its own bundle id (`com.andrebritodev.spectra.canary`), its
+own `~/Library/Application Support/Spectra Canary/` store + logs (seeded from
+the stable store on first launch) and no Sparkle updates. Both apps can run at
+the same time. Regenerate the icon with `swift scripts/make-canary-icon.swift`.
 
 ## Resource regression checks
 

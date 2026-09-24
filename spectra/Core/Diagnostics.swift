@@ -37,7 +37,7 @@ enum Diagnostics {
 
         // Write versions summary.
         let summary = """
-        Spectra \(appVersion)
+        \(AppInfo.displayName) \(appVersion)
         macOS \(ProcessInfo.processInfo.operatingSystemVersionString)
         Generated \(stamp)
 

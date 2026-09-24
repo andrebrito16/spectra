@@ -98,7 +98,8 @@ nonisolated enum Log {
 }
 
 /// Thread-safe, size-rotating file sink. Writes to
-/// `~/Library/Application Support/Spectra/Logs/spectra.log`.
+/// `~/Library/Application Support/Spectra/Logs/spectra.log`
+/// (`Spectra Canary/Logs/` for canary builds).
 nonisolated final class FileLogSink: @unchecked Sendable {
     static let shared = FileLogSink()
 
@@ -117,7 +118,7 @@ nonisolated final class FileLogSink: @unchecked Sendable {
             for: .applicationSupportDirectory, in: .userDomainMask,
             appropriateFor: nil, create: true))
             ?? URL(fileURLWithPath: NSTemporaryDirectory())
-        directory = base.appendingPathComponent("Spectra/Logs", isDirectory: true)
+        directory = base.appendingPathComponent("\(AppInfo.supportDirectoryName)/Logs", isDirectory: true)
         fileURL = directory.appendingPathComponent("spectra.log")
         backupURL = directory.appendingPathComponent("spectra.1.log")
         formatter = ISO8601DateFormatter()

@@ -67,7 +67,9 @@ struct SpectraCommands: Commands {
                     NSWorkspace.shared.open(url)
                 }
             }
-            Button("Check for Updates…") { env.updater.checkForUpdates() }
+            if env.updater.isEnabled {
+                Button("Check for Updates…") { env.updater.checkForUpdates() }
+            }
             Divider()
             Button("Keyboard Shortcuts") { env.navigation.showShortcuts = true }
                 .keyboardShortcut("/", modifiers: .command)

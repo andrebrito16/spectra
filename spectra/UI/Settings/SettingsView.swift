@@ -66,14 +66,20 @@ private struct GeneralSettings: View {
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 Section("Updates") {
-                    Picker("Channel", selection: $settings.updateChannel) {
-                        Text("Stable").tag("stable")
-                        Text("Beta").tag("beta")
+                    if env.updater.isEnabled {
+                        Picker("Channel", selection: $settings.updateChannel) {
+                            Text("Stable").tag("stable")
+                            Text("Beta").tag("beta")
+                        }
+                        .onChange(of: settings.updateChannel) { _, _ in try? modelContext.save() }
+                        Button("Check for Updates…") { env.updater.checkForUpdates() }
+                        Text("Updates are downloaded only from signed Sparkle releases.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    } else {
+                        Text("This is a canary build (\(Bundle.main.appVersionString)). "
+                             + "Automatic updates are off; rebuild with scripts/canary.sh.")
+                            .font(.caption).foregroundStyle(.secondary)
                     }
-                    .onChange(of: settings.updateChannel) { _, _ in try? modelContext.save() }
-                    Button("Check for Updates…") { env.updater.checkForUpdates() }
-                    Text("Updates are downloaded only from signed Sparkle releases.")
-                        .font(.caption).foregroundStyle(.secondary)
                 }
             } else {
                 Text("Settings not loaded.").foregroundStyle(.secondary)

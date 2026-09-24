@@ -25,9 +25,16 @@ enum PersistenceStore {
     /// App-owned store location, alongside `Spectra/Logs`. Replaces the shared
     /// OS-default `~/Library/Application Support/default.store`.
     static var storeURL: URL {
-        let dir = applicationSupport.appendingPathComponent("Spectra", isDirectory: true)
+        let dir = applicationSupport.appendingPathComponent(AppInfo.supportDirectoryName, isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent("Spectra.store")
+    }
+
+    /// The stable app's store. A canary build seeds its own store from it once
+    /// (see `seedCanaryStoreIfNeeded`) so it starts with the real cluster list.
+    private static var stableStoreURL: URL {
+        applicationSupport.appendingPathComponent("Spectra", isDirectory: true)
+            .appendingPathComponent("Spectra.store")
     }
 
     /// Legacy OS-default location used before the store had an explicit URL.
@@ -51,7 +58,11 @@ enum PersistenceStore {
     /// unopenable store so the app still launches (the catalog's recovery screen
     /// + the sticky `hasPersistedClusters` marker handle the resulting empty read).
     static func makeContainer(schema: Schema) -> ModelContainer {
-        migrateLegacyStoreIfNeeded()
+        if AppInfo.isCanary {
+            seedCanaryStoreIfNeeded()
+        } else {
+            migrateLegacyStoreIfNeeded()
+        }
         let url = storeURL
         let configuration = ModelConfiguration(schema: schema, url: url)
 
@@ -103,6 +114,29 @@ enum PersistenceStore {
             }
         }
         Log.info("Migrated cluster store from default.store to \(dest.lastPathComponent)", .persistence)
+    }
+
+    /// Canary only: copy (never move) the stable store into the canary directory
+    /// the first time the canary runs, so display names, orgs and pins carry
+    /// over. After that the two stores live independent lives; the stable app's
+    /// `default.store` legacy migration is deliberately not run from a canary.
+    private static func seedCanaryStoreIfNeeded() {
+        let fm = FileManager.default
+        let dest = storeURL
+        let src = stableStoreURL
+        guard !fm.fileExists(atPath: dest.path), fm.fileExists(atPath: src.path) else { return }
+        for suffix in sidecarSuffixes {
+            let from = URL(fileURLWithPath: src.path + suffix)
+            let to = URL(fileURLWithPath: dest.path + suffix)
+            guard fm.fileExists(atPath: from.path) else { continue }
+            do {
+                try fm.copyItem(at: from, to: to)
+            } catch {
+                Log.error("Canary store seed failed for \(from.lastPathComponent): \(error)",
+                          .persistence)
+            }
+        }
+        Log.info("Seeded canary store from the stable Spectra store", .persistence)
     }
 
     /// Rename an unopenable store (and sidecars) to `*.corrupt` so a fresh store

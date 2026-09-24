@@ -4,7 +4,7 @@ cask "spectra-k8s" do
 
   url "https://github.com/andrebrito16/spectra/releases/download/v#{version}/Spectra-#{version}.dmg"
   name "Spectra"
-  desc "Native macOS Kubernetes IDE"
+  desc "Native Kubernetes IDE"
   homepage "https://github.com/andrebrito16/spectra"
 
   livecheck do

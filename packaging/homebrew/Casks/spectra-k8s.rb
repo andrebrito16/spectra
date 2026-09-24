@@ -1,6 +1,6 @@
 cask "spectra-k8s" do
-  version "0.1.0"
-  sha256 "4b7da88241d03658b4db91897561d2335142783a555043e5fa8d21f3b605d036"
+  version "0.1.1"
+  sha256 "dd1b94399d46721345ca3fc7418a95b4020a10b8b7b76529c370e9bd6298bd4c"
 
   url "https://github.com/andrebrito16/spectra/releases/download/v#{version}/Spectra-#{version}.dmg"
   name "Spectra"
@@ -12,7 +12,7 @@ cask "spectra-k8s" do
     strategy :github_latest
   end
 
-  depends_on macos: ">= :tahoe"
+  depends_on macos: :tahoe
 
   app "Spectra.app"
 

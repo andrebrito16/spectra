@@ -23,12 +23,11 @@ Lens-style Kubernetes IDEs today are Electron apps with a Node main process, a C
 - Helm (v3 & v4 basic flows) via the bundled mise/brew/asdf-aware tool resolver.
 - Metrics: auto-detects **Grafana Mimir** / Thanos / Prometheus (prefers Ingress URL because the EKS API-proxy often times out); node CPU/RAM bars via metrics-server.
 - Rotating diagnostics log + "Collect Diagnostics" bundle for bug reports.
-- Homebrew Cask (`spectra-k8s`) and signed Sparkle OTA update packaging: see [OTA.md](OTA.md) and [packaging/homebrew/Casks/spectra-k8s.rb](packaging/homebrew/Casks/spectra-k8s.rb).
+- Homebrew Cask (`spectra-k8s`) and signed Sparkle in-app updates (see [packaging/homebrew/Casks/spectra-k8s.rb](packaging/homebrew/Casks/spectra-k8s.rb) and `scripts/release.sh`).
 
 ## What's missing / unverified
 
 - No XCTest suite yet.
-- No signed / notarized DMG release builds — clone and build from source.
 - Verified against EKS; **GKE / AKS / kind / minikube unverified**.
 - Some Freelens features still to port (hotbar, full Workloads dashboard, per-cluster bundled kubectl version, auto-update).
 
@@ -37,6 +36,14 @@ Lens-style Kubernetes IDEs today are Electron apps with a Node main process, a C
 - macOS **26 (Tahoe)** or newer.
 - Xcode **26.x** with the Metal Toolchain component (one-time download below).
 - `kubectl` and `helm` somewhere standard (Homebrew, mise, asdf — the binary resolver finds them automatically).
+
+## Install
+
+```bash
+brew install --cask andrebrito16/spectra-k8s/spectra-k8s
+```
+
+Or download the signed, notarized DMG from the [latest release](https://github.com/andrebrito16/spectra/releases/latest). The app checks for updates itself via Sparkle.
 
 ## Build & run
 

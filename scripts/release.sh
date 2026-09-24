@@ -9,7 +9,10 @@ ARCHIVE="$BUILD_DIR/Spectra.xcarchive"
 EXPORT_DIR="$BUILD_DIR/export"
 APP="$EXPORT_DIR/Spectra.app"
 STAGING="$BUILD_DIR/dmg-staging"
-RELEASE_VERSION="${RELEASE_VERSION:-0.0.1}"
+# Defaults to MARKETING_VERSION in the Xcode project so the artifact names
+# always match the CFBundleShortVersionString baked into the app.
+PROJECT_VERSION=$(sed -nE 's/.*MARKETING_VERSION = ([^;]+);/\1/p' spectra.xcodeproj/project.pbxproj | head -1)
+RELEASE_VERSION="${RELEASE_VERSION:-$PROJECT_VERSION}"
 DMG="$BUILD_DIR/Spectra-${RELEASE_VERSION}.dmg"
 ZIP="$BUILD_DIR/Spectra-${RELEASE_VERSION}.zip"
 NOTARY_PROFILE="${NOTARY_PROFILE:-spectra-notary}"

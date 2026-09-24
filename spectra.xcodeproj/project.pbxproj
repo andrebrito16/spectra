@@ -342,7 +342,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.1;
+				MARKETING_VERSION = 0.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.andrebritodev.spectra;
 				PRODUCT_NAME = Spectra;
 				REGISTER_APP_GROUPS = YES;
@@ -379,7 +379,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.1;
+				MARKETING_VERSION = 0.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.andrebritodev.spectra;
 				PRODUCT_NAME = Spectra;
 				REGISTER_APP_GROUPS = YES;
@@ -416,7 +416,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 0.1.1;
+				MARKETING_VERSION = 0.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.andrebritodev.spectra.canary;
 				PRODUCT_NAME = "Spectra Canary";
 				REGISTER_APP_GROUPS = YES;

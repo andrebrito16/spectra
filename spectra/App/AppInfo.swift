@@ -33,4 +33,14 @@ nonisolated enum AppInfo {
     /// build with no feed of its own, and the stable feed would "update" it back
     /// to the last release.
     static var updatesEnabled: Bool { !isCanary }
+
+    /// Developer conveniences (replay onboarding, reset first-run state) are only
+    /// surfaced in the canary and Debug builds — never in the stable release.
+    static var showsDeveloperTools: Bool {
+        #if DEBUG
+        return true
+        #else
+        return isCanary
+        #endif
+    }
 }

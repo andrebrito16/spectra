@@ -85,15 +85,40 @@ enum Tokens {
 }
 
 /// Observable theme injected via SwiftUI environment. Holds the user's mode and
-/// the accent tint. Status colors are static (see `SpectraStatus`).
+/// the accent tint, both persisted in UserDefaults so the choice made during
+/// onboarding (or in Preferences) survives a relaunch. Status colors are static
+/// (see `SpectraStatus`).
 @Observable
 final class Theme {
-    var mode: ThemeMode
-    var accent: Color
+    private enum Keys {
+        static let mode = "spectra.themeMode"
+        static let accentHex = "spectra.accentHex"
+    }
 
-    init(mode: ThemeMode = .auto, accent: Color = .accentColor) {
+    var mode: ThemeMode {
+        didSet { UserDefaults.standard.set(mode.rawValue, forKey: Keys.mode) }
+    }
+    var accent: Color {
+        didSet { UserDefaults.standard.set(accent.rgbHex, forKey: Keys.accentHex) }
+    }
+
+    init(mode: ThemeMode? = nil, accent: Color? = nil) {
+        let defaults = UserDefaults.standard
         self.mode = mode
-        self.accent = accent
+            ?? defaults.string(forKey: Keys.mode).flatMap(ThemeMode.init(rawValue:))
+            ?? .auto
+        self.accent = accent ?? Color(hex: defaults.string(forKey: Keys.accentHex)) ?? .accentColor
+    }
+
+    /// True when the accent is the app's default (asset catalog) color.
+    var usesDefaultAccent: Bool {
+        UserDefaults.standard.string(forKey: Keys.accentHex) == nil
+    }
+
+    /// Back to the asset-catalog accent (and forget the persisted override).
+    func resetAccent() {
+        accent = .accentColor
+        UserDefaults.standard.removeObject(forKey: Keys.accentHex)
     }
 
     var colorScheme: ColorScheme? { mode.colorScheme }

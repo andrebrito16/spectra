@@ -74,6 +74,10 @@ struct SpectraCommands: Commands {
             Button("Keyboard Shortcuts") { env.navigation.showShortcuts = true }
                 .keyboardShortcut("/", modifiers: .command)
             Button("Reveal Diagnostics Logs") { Diagnostics.revealLogs() }
+            if AppInfo.showsDeveloperTools {
+                Divider()
+                Button("Show Onboarding Again") { env.navigation.showOnboarding = true }
+            }
         }
     }
 }

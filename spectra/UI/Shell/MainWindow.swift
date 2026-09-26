@@ -37,6 +37,9 @@ struct MainWindow: View {
         .sheet(isPresented: $navigation.showShortcuts) {
             KeyboardShortcutsView()
         }
+        .sheet(isPresented: $navigation.showOnboarding) {
+            OnboardingView()
+        }
     }
 
     private var contentRegion: some View {

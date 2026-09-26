@@ -81,6 +81,15 @@ private struct GeneralSettings: View {
                             .font(.caption).foregroundStyle(.secondary)
                     }
                 }
+                if AppInfo.showsDeveloperTools {
+                    Section("Developer") {
+                        Button("Show Onboarding Again") { env.navigation.showOnboarding = true }
+                        Button("Reset First-Run State") { Onboarding.reset() }
+                        Text("Onboarding replays now, or on the next launch after a reset. "
+                             + "Only available in canary and Debug builds.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
             } else {
                 Text("Settings not loaded.").foregroundStyle(.secondary)
             }

@@ -105,6 +105,10 @@ UI/
                  DockActions / Helm views / PortForwardsView / NodeUsageCell / PodDetail).
                  New kinds are added by registering a ResourceConfig — no bespoke views.
 Catalog/         CatalogView, AddClusterView, CommandPalette, RenameClusterSheet.
+Onboarding/      First-run sheet (OnboardingView + pages + mesh backdrop). Completion is
+                 a UserDefaults version marker (`Onboarding`); replay/reset via Help menu
+                 and Settings → General → Developer, only when `AppInfo.showsDeveloperTools`
+                 (canary + Debug). Theme mode/accent persist in UserDefaults (`Theme`).
 App/             SpectraApp (@main), AppEnvironment (@MainActor @Observable — root DI),
                  AppCommands (menu bar bound to env), Notifications.
 Core/            Log (os.Logger + rotating file sink in Application Support), Diagnostics.

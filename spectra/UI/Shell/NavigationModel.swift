@@ -68,6 +68,9 @@ final class NavigationModel {
     var showCommandPalette = false
     var showAddCluster = false
     var showShortcuts = false
+    /// First-run onboarding sheet (see `Onboarding`). Set at launch when the flow
+    /// hasn't been completed, or on demand from the canary/Debug developer tools.
+    var showOnboarding = false
     var dockOpen = false
 
     private var backStack: [Route] = []

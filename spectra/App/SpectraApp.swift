@@ -60,6 +60,13 @@ private struct RootView: View {
                 guard !didBootstrap else { return }
                 didBootstrap = true
                 env.bootstrap(modelContext: modelContext)
+                // First launch only: let the window settle, then present the
+                // onboarding sheet (a sheet requested before the window exists
+                // is silently dropped).
+                if !Onboarding.isCompleted {
+                    try? await Task.sleep(for: .milliseconds(450))
+                    env.navigation.showOnboarding = true
+                }
             }
     }
 }
